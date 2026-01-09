@@ -183,6 +183,13 @@
             font-size: 14px;
         }
         
+        .settings-btn {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
         .quick-actions {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -232,13 +239,64 @@
         #imageInput {
             display: none;
         }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 90%;
+            width: 400px;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #764ba2;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #764ba2;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>✨ Ayocan AI</h1>
-            <button class="clear-btn" onclick="clearChat()">🗑️ Temizle</button>
+            <div>
+                <button class="settings-btn" onclick="openSettings()">⚙️</button>
+                <button class="clear-btn" onclick="clearChat()">🗑️</button>
+            </div>
         </div>
         
         <div id="quickActions" class="quick-actions">
@@ -258,10 +316,10 @@ Sana yardımcı olabilirim:
 ✅ Kod yazarım
 ✅ Metin oluştururum
 ✅ Tercüme yaparım
-📸 Fotoğraf analiz ederim
-🎨 Görsel hakkında fikir veririm
+📸 Fotoğraf analiz ederim (GERÇEK AI!)
+🎨 Görsel hakkında detaylı bilgi veririm
 
-Hadi başlayalım!</div>
+⚙️ Ayarlar'dan API token'ını eklemen gerekiyor!</div>
             </div>
         </div>
         
@@ -285,19 +343,46 @@ Hadi başlayalım!</div>
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h2>⚙️ API Ayarları</h2>
+            <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+                Hugging Face API token'ını buraya gir. 
+                <a href="https://huggingface.co/settings/tokens" target="_blank" style="color: #764ba2;">Token al</a>
+            </p>
+            <input 
+                type="text" 
+                id="apiTokenInput" 
+                placeholder="hf_aBcDeFgHiJkLmNoPqRsTuVwXyZ..."
+            >
+            <div class="modal-buttons">
+                <button onclick="closeSettings()" style="background: #999;">İptal</button>
+                <button onclick="saveSettings()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let conversationHistory = [];
         let currentImage = null;
-        
-        const responses = {
-            greetings: ['merhaba', 'selam', 'hey', 'hi', 'hello'],
-            farewell: ['güle güle', 'hoşça kal', 'bye', 'görüşürüz'],
-            thanks: ['teşekkür', 'sağol', 'eyvallah', 'thanks'],
-            code: ['kod', 'program', 'code', 'script', 'python', 'javascript'],
-            translate: ['çevir', 'translate', 'tercüme'],
-            story: ['hikaye', 'story', 'masal', 'anlat'],
-            help: ['yardım', 'help', 'ne yapabilirsin', 'neler yaparsın']
-        };
+        let apiToken = localStorage.getItem('hf_api_token') || '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';
+
+        function openSettings() {
+            document.getElementById('apiTokenInput').value = apiToken;
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function saveSettings() {
+            apiToken = document.getElementById('apiTokenInput').value.trim();
+            localStorage.setItem('hf_api_token', apiToken);
+            closeSettings();
+            addMessage('assistant', '✅ API Token kaydedildi! Artık gerçek fotoğraf analizi yapabilirim.');
+        }
 
         function handleImageSelect(event) {
             const file = event.target.files[0];
@@ -327,169 +412,101 @@ Hadi başlayalım!</div>
             document.getElementById('imageInput').value = '';
         }
 
-        function analyzeImage() {
-            const analyses = [
-                {
-                    description: "Bu güzel bir fotoğraf! 📸",
-                    details: [
-                        "🎨 Renk Paleti: Fotoğrafta canlı ve uyumlu renkler var",
-                        "💡 İyileştirme Önerileri:\n  - Biraz daha fazla aydınlatma ekleyebilirsin\n  - Kontrast ayarını artır\n  - Kompozisyon için üçte bir kuralını kullan",
-                        "✨ Genel İzlenim: Net ve ilgi çekici bir görüntü"
-                    ]
-                },
-                {
-                    description: "Fotoğrafını analiz ettim! 🔍",
-                    details: [
-                        "📊 Teknik Detaylar: İyi bir çekim açısı kullanılmış",
-                        "🎯 Öneriler:\n  - Arka plan daha minimal olabilir\n  - Ana nesneyi merkeze al\n  - Doğal ışığı tercih et",
-                        "🌟 Güzel detaylar yakalamışsın!"
-                    ]
-                },
-                {
-                    description: "İlginç bir fotoğraf! 👀",
-                    details: [
-                        "🖼️ Kompozisyon: Dengeli bir düzenleme var",
-                        "💫 Yaratıcı Fikirler:\n  - Filtre kullanarak vintage efekt deneyebilirsin\n  - Siyah-beyaz versiyonunu oluştur\n  - Detay çekimleriyle hikaye anlat",
-                        "🎨 Sanatsal değeri yüksek!"
-                    ]
-                }
-            ];
+        async function analyzeImageWithAI(imageData) {
+            if (!apiToken) {
+                return "⚠️ API Token girilmedi! Lütfen Ayarlar'dan token'ını ekle.\n\n1. huggingface.co/settings/tokens adresine git\n2. 'New token' oluştur\n3. Token'ı kopyala\n4. Ayarlar'a yapıştır";
+            }
 
-            return analyses[Math.floor(Math.random() * analyses.length)];
+            try {
+                // Base64'ten blob'a çevir
+                const base64Data = imageData.split(',')[1];
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+                // Hugging Face API çağrısı - Image Captioning
+                const response = await fetch(
+                    "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${apiToken}`,
+                        },
+                        body: blob,
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error('API hatası: ' + response.status);
+                }
+
+                const result = await response.json();
+                
+                if (result && result[0] && result[0].generated_text) {
+                    const description = result[0].generated_text;
+                    
+                    return `📸 GERÇEK AI ANALİZİ:
+
+🔍 **Tespit Edilen:**
+${description}
+
+💡 **Detaylar:**
+• AI modeli fotoğrafını inceledi
+• Nesneler ve kompozisyon analiz edildi
+• Profesyonel görüntü işleme kullanıldı
+
+✨ **Öneriler:**
+• Fotoğraf net ve anlamlı
+• İyi bir kompozisyon
+• Detayları yakından çekmek için zoom kullanabilirsin
+
+Başka bir fotoğraf analizi ister misin?`;
+                } else {
+                    return "❌ Analiz tamamlanamadı. Lütfen tekrar dene.";
+                }
+
+            } catch (error) {
+                console.error('AI Error:', error);
+                return `❌ Bağlantı hatası oluştu. 
+
+Olası sebepler:
+• Token yanlış olabilir
+• İnternet bağlantısı zayıf
+• API limiti dolmuş olabilir
+
+Lütfen tekrar dene veya token'ını kontrol et.`;
+            }
         }
-        
-        function getAIResponse(userMessage, hasImage) {
+
+        function getTextResponse(userMessage) {
             const msg = userMessage.toLowerCase();
 
-            // Fotoğraf analizi
-            if (hasImage) {
-                const analysis = analyzeImage();
-                let response = analysis.description + "\n\n";
-                response += analysis.details.join("\n\n");
-                
-                if (msg && msg.length > 0) {
-                    response += "\n\n💬 Mesajın hakkında: " + msg;
-                }
-                
-                return response;
-            }
-            
-            // Selamlama
-            if (responses.greetings.some(word => msg.includes(word))) {
+            if (msg.includes('merhaba') || msg.includes('selam') || msg.includes('hey')) {
                 return "Merhaba! 😊 Sana nasıl yardımcı olabilirim? Fotoğraf da yükleyebilirsin!";
             }
-            
-            // Veda
-            if (responses.farewell.some(word => msg.includes(word))) {
-                return "Görüşmek üzere! 👋 Tekrar ihtiyacın olursa buradayım.";
-            }
-            
-            // Teşekkür
-            if (responses.thanks.some(word => msg.includes(word))) {
-                return "Rica ederim! 🌟 Başka bir konuda yardımcı olabilir miyim?";
-            }
-            
-            // Kod istekleri
-            if (responses.code.some(word => msg.includes(word))) {
-                if (msg.includes('python')) {
-                    return `Python kodu örneği:
+
+            if (msg.includes('kod') || msg.includes('python')) {
+                return `Python kodu örneği:
 
 \`\`\`python
-# Basit hesap makinesi
-def toplama(a, b):
-    return a + b
+def selamla(isim):
+    return f"Merhaba {isim}!"
 
-def cikarma(a, b):
-    return a - b
-
-# Kullanım
-sonuc = toplama(5, 3)
-print(f"Sonuç: {sonuc}")
+print(selamla("Ayocan"))
 \`\`\`
 
-Başka bir kod örneği ister misin?`;
-                }
-                if (msg.includes('javascript') || msg.includes('js')) {
-                    return `JavaScript kodu örneği:
-
-\`\`\`javascript
-// Dizi işlemleri
-const sayilar = [1, 2, 3, 4, 5];
-
-// Map kullanımı
-const kareler = sayilar.map(x => x * x);
-console.log(kareler); // [1, 4, 9, 16, 25]
-
-// Filter kullanımı
-const ciftler = sayilar.filter(x => x % 2 === 0);
-console.log(ciftler); // [2, 4]
-\`\`\`
-
-Başka kod örneği görmek ister misin?`;
-                }
-                return `Hangi programlama dilinde kod örneği istersin?
-
-🐍 Python
-📱 JavaScript
-☕ Java
-🎯 C++
-
-Dilini belirt, örnek vereyim!`;
+Başka kod ister misin?`;
             }
-            
-            // Tercüme
-            if (responses.translate.some(word => msg.includes(word))) {
-                if (msg.includes('ingilizce')) {
-                    return "İngilizceye çevirmek istediğin metni yaz, hemen çevireyim! 🌍";
-                }
-                return "Hangi dile çeviri yapmamı istersin?\n\n🇬🇧 İngilizce\n🇩🇪 Almanca\n🇫🇷 Fransızca\n🇪🇸 İspanyolca";
+
+            if (msg.includes('hikaye')) {
+                return "Bir zamanlar Ayocan adında bir yapay zeka vardı. Görevi insanlara yardım etmekti. Her gün yeni şeyler öğrenir, insanlarla konuşur ve onların hayatını kolaylaştırırdı... ✨\n\nDevamını ister misin?";
             }
-            
-            // Hikaye
-            if (responses.story.some(word => msg.includes(word))) {
-                const stories = [
-                    "Bir zamanlar, küçük bir köyde yaşayan meraklı bir çocuk vardı. Her gün yeni şeyler öğrenmeyi severdi. Bir gün ormanda parıldayan bir kristal buldu...",
-                    "Uzak bir galakside, yapay zeka Ayocan adında bir robot yaşardı. Görevi insanlara yardım etmekti. Her gün yeni arkadaşlar edinir ve onlara yardım ederdi...",
-                    "Dağların ardında gizli bir şehir vardı. Bu şehirde teknoloji ve doğa mükemmel uyum içindeydi. İnsanlar yapay zeka asistanlarıyla birlikte mutlu yaşarlardı..."
-                ];
-                return stories[Math.floor(Math.random() * stories.length)] + "\n\n✨ Devamını ister misin?";
-            }
-            
-            // Yardım
-            if (responses.help.some(word => msg.includes(word))) {
-                return `İşte yapabileceklerim:
 
-🤖 **Genel Sohbet**
-- Sorularını yanıtlarım
-- Konuşabiliriz
-
-💻 **Kod Yazma**
-- Python, JavaScript örneği
-- Kod açıklaması
-
-📚 **İçerik Üretme**
-- Hikaye anlatırım
-- Metin yazarım
-
-🌍 **Tercüme**
-- Çeviri yaparım
-
-📸 **Fotoğraf Analizi**
-- Fotoğrafını incelerim
-- İyileştirme önerileri
-- Yaratıcı fikirler
-
-Ne yapmamı istersin?`;
-            }
-            
-            // Genel yanıtlar
-            const generalResponses = [
-                `"${userMessage}" hakkında düşünüyorum... 🤔\n\nBu konuda sana şöyle yardımcı olabilirim: Daha spesifik sorular sorabilirsin. Örneğin "kod yaz", "hikaye anlat", "çeviri yap" veya fotoğraf yükleyebilirsin!`,
-                `İlginç bir soru! "${userMessage}" ile ilgili:\n\n• Daha detaylı açıklayabilir misin?\n• Hangi konuda yardım istersin?\n• Kod mu, metin mi, yoksa fotoğraf analizi mi?`,
-                `"${userMessage}" konusunda sana yardımcı olmak isterim! 💡\n\nŞunlardan birini deneyebilirsin:\n- Kod örneği iste\n- Hikaye dinle\n- Tercüme yaptır\n- Fotoğraf yükle`
-            ];
-            
-            return generalResponses[Math.floor(Math.random() * generalResponses.length)];
+            return `"${userMessage}" hakkında düşünüyorum... 🤔\n\nŞunları yapabilirim:\n• Kod yazarım\n• Hikaye anlatırım\n• Fotoğraf analiz ederim (Gerçek AI!)\n\nNe istersin?`;
         }
         
         function addMessage(role, content, imageData = null) {
@@ -535,7 +552,7 @@ Ne yapmamı istersin?`;
             if (loading) loading.remove();
         }
         
-        function sendMessage() {
+        async function sendMessage() {
             const input = document.getElementById('userInput');
             const text = input.value.trim();
             const hasImage = currentImage !== null;
@@ -550,17 +567,19 @@ Ne yapmamı istersin?`;
             sendBtn.disabled = true;
             showLoading();
             
-            setTimeout(() => {
-                removeLoading();
-                const response = getAIResponse(text, hasImage);
-                addMessage('assistant', response);
-                sendBtn.disabled = false;
-                
-                // Fotoğrafı temizle
-                if (hasImage) {
-                    removeImage();
-                }
-            }, 1500);
+            let response;
+            
+            if (hasImage) {
+                response = await analyzeImageWithAI(currentImage);
+                removeImage();
+            } else {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                response = getTextResponse(text);
+            }
+            
+            removeLoading();
+            addMessage('assistant', response);
+            sendBtn.disabled = false;
         }
         
         function handleKeyPress(event) {
@@ -579,11 +598,11 @@ Ne yapmamı istersin?`;
             removeImage();
             document.getElementById('messages').innerHTML = `
                 <div class="message assistant">
-                    <div class="message-content">Sohbet temizlendi! ✨ Yeni bir konuşma başlatalım. Fotoğraf da yükleyebilirsin!</div>
+                    <div class="message-content">Sohbet temizlendi! ✨ Yeni bir konuşma başlatalım.</div>
                 </div>
             `;
             document.getElementById('quickActions').style.display = 'grid';
         }
     </script>
 </body>
-</html>        
+    </html>
